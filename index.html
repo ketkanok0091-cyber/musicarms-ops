@@ -243,8 +243,32 @@ dialog::backdrop{background:rgba(20,14,8,.45)}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 @media (max-width:980px){.sumkpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:820px){.waitgrid{grid-template-columns:1fr}.sumkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.carrytag{display:inline-block;margin-left:6px;font-size:.72rem;color:var(--mute);border:1px dashed var(--line2);border-radius:5px;padding:0 6px}
+
+.blnum.wr{--c:#2E6DA4}
+.linedate{width:140px;flex:none}
+.grp{border:1px solid var(--line);border-left-width:5px;border-radius:8px;padding:8px 14px;margin-top:8px}
+.grp.g-red{border-left-color:var(--t3);background:var(--t3bg)}
+.grp.g-amber{border-left-color:var(--t2);background:var(--t2bg)}
+.grp.g-blue{border-left-color:#2E6DA4;background:var(--sunk)}
+.grp.g-grey{border-left-color:var(--line2);background:var(--sunk)}
+.grphead{margin-bottom:2px}
+.grp ul{padding-left:18px;margin:0}
+.grp li{margin:2px 0}
+.agetag{display:inline-block;margin-left:6px;font-size:.76rem;color:var(--mute);border:1px solid var(--line2);border-radius:5px;padding:0 6px;background:var(--surface);white-space:nowrap}
+.agetag.bad{color:var(--t3);border-color:var(--t3)}
+.sumkpis{grid-template-columns:repeat(6,minmax(0,1fr))}
+
+.grpch{font-size:.86rem;font-weight:600;margin-top:6px}
+.grp .two{gap:10px}
+
+.grp.g-check{border-left-color:var(--acc);background:var(--sunk)}
+.grp.g-check td{padding:3px 8px;border-bottom:1px solid var(--line)}
+.blnum.t3{--c:var(--t3)}
 </style>
 </head>
+
 <body>
 <div class="wrap">
   <header>
@@ -386,7 +410,7 @@ dialog::backdrop{background:rgba(20,14,8,.45)}
 
   <section id="tab-backlog" class="panel hidden" role="tabpanel">
     <h2>งานค้างขาออก (บันทึกรายวัน)</h2>
-    <p class="hint">แต่ละทีมบันทึกเฉพาะช่องทางของตัวเองได้ตลอดวัน ใส่จำนวนแล้วพิมพ์รายละเอียดทีละรายการ · รายการที่ยังไม่จบจะยกมาวันถัดไปให้อัตโนมัติ (T1 เลื่อนเป็น T2, T2 เป็น T2+) ลบรายการที่เสร็จแล้วด้วยปุ่ม × · ทุกทีมบันทึกครบแล้วหัวหน้ากด "ยืนยันข้อมูลทั้งหมด" จึงบันทึกรูปส่งผู้บริหารและเข้า CSV</p>
+    <p class="hint">แต่ละทีมบันทึกเฉพาะช่องทางของตัวเองได้ตลอดวัน ใส่จำนวนแล้วพิมพ์รายละเอียดทีละรายการ · รายการที่ยังไม่จบจะยกมาวันถัดไปให้เองและนับในรายงานทันทีแม้ทีมนั้นยังไม่กดบันทึก (T1 เลื่อนเป็น T2 ส่วนออเดอร์ งานยกเลิก และรอต่างประเทศยกมาเหมือนเดิม) · ช่อง T2 และออเดอร์ใส่วันที่เปิดงานได้ เพื่อดูว่าค้างมานานแค่ไหน · ลบเฉพาะรายการที่จบแล้วด้วยปุ่ม × แล้วกดบันทึก · ทุกทีมบันทึกครบแล้วหัวหน้ากด "ยืนยันข้อมูลทั้งหมด" จึงบันทึกรูปส่งผู้บริหารและเข้า CSV</p>
     <div class="filters">
       <div class="f"><span class="lbl">วันที่</span><input type="date" id="blDate"></div>
     </div>
@@ -435,6 +459,12 @@ dialog::backdrop{background:rgba(20,14,8,.45)}
 
   <section id="tab-inlist" class="panel hidden" role="tabpanel">
     <h2>คิวตรวจของเข้า (โซนชั้น 1)</h2>
+    <div class="filters">
+      <button class="btn" id="inPng">บันทึก/ส่งเป็นรูป (PNG)</button>
+      <button class="btn" id="inCopy">คัดลอกข้อความสรุป</button>
+      <span class="hint" id="inHint"></span>
+    </div>
+    <div class="sumcard" id="inSumCard"></div>
     <p class="hint">เป้าหมาย T0: ของที่เข้าวันนี้ ตรวจและส่งต่อเสร็จในวันเดียวกัน ขายได้ → เข้าโลเคชัน · ขายไม่ได้ → เคลียร์แรนซ์ · ให้ช่างดูก่อน → ส่งช่าง</p>
     <div class="lane" id="inLane"></div>
     <div class="filters">
@@ -470,15 +500,16 @@ const SETUP='เซ็ตอัพ/แจ้งปัญหา';
 const RENEW='เปลี่ยน';
 const OLD_RENEW='ส่งใหม่–รับกลับ';
 const CHG='เปลี่ยนขนส่ง';
-const MISS='ส่งไม่ครบ/ส่งเกิน';
-const TYPES=['ส่งตาม','ส่งใหม่',RENEW,'รับกลับ',CHG,MISS,'ส่งซ้ำ'];
+const MISS='ส่งไม่ครบ';
+const OLD_MISS='ส่งไม่ครบ/ส่งเกิน';
+const TYPES=['ส่งตาม','ส่งใหม่',RENEW,'รับกลับ',MISS];
 const TYPE_INFO={
   'ส่งตาม':{flow:'ส่งออก',d:'ส่งของส่วนที่เหลือหลังได้เอกสาร หรือส่งบางส่วนไปก่อนแล้ว ส่วนที่เหลืออาจต้องรอของเข้า',ship:true,ret:'no'},
   [RENEW]:{flow:'ส่งใหม่ + รับกลับ',d:'ส่งตัวใหม่ออกจากโกดังได้ทันที ไม่ต้องรอของเก่ากลับ ส่วนขารับกลับไล่เป็นขั้น โทรแจ้ง → บุ๊คขนส่ง → ขนส่งรับของ → ของถึงคลัง',ship:true,ret:'yes',skipRetOpt:true,waitOpt:true},
   'ส่งใหม่':{flow:'ส่งตัวใหม่ + รับตัวเดิมกลับ',d:'สินค้าพังหรือเสียภายในประกัน 7 วัน ส่งตัวใหม่ให้ลูกค้าและรับตัวเดิมกลับ ถ้าไม่คุ้มเลือกไม่รับกลับได้',ship:true,ret:'yes',skipRetOpt:true},
   'รับกลับ':{flow:'บุ๊คเข้ารับ → ขนส่งรับแล้ว ส่งใหม่',d:'บุ๊คขนส่งเข้ารับสินค้าก่อน ถ้าอยู่ในประกัน 7 วัน ขนส่งรับของแล้วส่งตัวใหม่ออกได้ทันที ถ้าไม่อยู่ในประกัน รอของถึงคลังก่อน',ship:true,ret:'yes',shipOpt:true},
   'ส่งผิด':{flow:'ส่งตัวที่ถูก + รับตัวผิดกลับ',d:'คลังตรวจผิด เช่น ผิดสี ผิดบาร์โค้ด ต้องสรุปส่งตัวที่ถูกและรับตัวที่ผิดกลับ',ship:true,ret:'yes'},
-  [MISS]:{flow:'ส่งของที่ขาด / รับของที่เกินคืน',d:'จำนวนในบิลเดียวกันไม่ตรง เลือกได้ว่าต้องส่งของที่ขาดเพิ่ม หรือรับของที่เกินกลับ หรือทั้งสองอย่าง',ship:true,ret:'no',missOpt:true},
+  [MISS]:{flow:'ส่งของที่ขาดเพิ่ม',d:'ลูกค้าได้ของไม่ครบตามบิล ต้องส่งของที่ขาดเพิ่ม · ถ้าเป็นของเกินหรือส่งซ้ำ ให้ใช้ประเภทรับกลับ',ship:true,ret:'no'},
   'ส่งซ้ำ':{flow:'บุ๊คเข้ารับด่วน',d:'ส่งซ้ำทั้งบิล เช่น ส่ง Lalamove ไปแล้ว มี DHL ตามไปอีก ต้องบุ๊คขนส่งเข้ารับกลับด่วน ไม่มีการส่งออกเพิ่ม',ship:false,ret:'yes'},
   'สาขาฝากส่ง':{flow:'คลังส่ง DHL แทนสาขา',d:'สาขาขายแล้วฝากคลังส่งให้ลูกค้า ระบุสาขาที่ฝาก คลังส่งออกแล้วแจ้งเลขพัสดุกลับไปที่สาขา · งานรถส่งเองไม่ต้องบันทึกที่นี่ (สาขาจองรอบรถในระบบอยู่แล้ว)',ship:true,ret:'no',branch:true,carrier:'DHL',bill:true},
   'ฝากสาขาส่ง':{flow:'สาขาส่ง DHL / E-Com',d:'ของอยู่ที่สาขา ฝากสาขาส่งให้ลูกค้า ผู้ฝากต้องตามจนสาขาแจ้งว่าส่งแล้วพร้อมเลขพัสดุ แล้วกด "สาขาส่งแล้ว"',ship:true,ret:'no',branch:true,carriers:['DHL','E-Com'],bill:true},
@@ -488,6 +519,7 @@ TYPE_INFO['ส่งใหม่']={flow:'ส่งตัวใหม่อย�
 TYPE_INFO['รับกลับ']={flow:'รับของกลับอย่างเดียว',d:'รับสินค้ากลับจากลูกค้าอย่างเดียว ไม่มีการส่งออกใหม่ ขั้นตอน โทรแจ้ง → บุ๊คขนส่ง → ได้เลขตีกลับ → ของถึงคลัง',ship:false,ret:'yes'};
 TYPE_INFO[CHG]={flow:'ส่งใหม่ด้วยขนส่งอื่น',d:'ขนส่งเดิมมีปัญหา เช่น รถไม่เข้ารับ พัสดุค้าง ต้องเปลี่ยนไปส่งกับขนส่งอื่น',ship:true,ret:'no',chgOpt:true};
 TYPE_INFO[OLD_RENEW]=TYPE_INFO[RENEW];
+TYPE_INFO[OLD_MISS]=TYPE_INFO[MISS];
 const TECH={
   advise:{l:'แนะนำลูกค้าปรับเอง',ship:false,ret:'no'},
   branch:{l:'นัดเข้าสาขาให้ช่างเซ็ต',ship:false,ret:'no'},
@@ -609,7 +641,7 @@ function norm(c){
   const v2=c.v===2;
   const s=c.status;
   return {...c,
-    type: c.type===OLD_RENEW?RENEW:c.type,
+    type: c.type===OLD_RENEW?RENEW:(c.type===OLD_MISS?MISS:c.type),
     shipNeed: v2 ? !!c.shipNeed : true,
     retNeed: v2 ? (c.retNeed||'no') : 'no',
     warranty7: c.warranty7!==false,
@@ -1374,6 +1406,7 @@ function inLegs(x){
 }
 let inSeq=0;
 async function renderInList(){
+  renderInCard();
   const pend=inb.filter(x=>{const s=inStageOf(x);return s==='check'||s==='move'});
   const cnt=[0,0,0,0]; let val=[0,0,0,0];
   pend.forEach(x=>{const k=bucketOf(inT(x)); cnt[k]+=Number(x.qty)||0; val[k]+=inVal(x);});
@@ -1576,12 +1609,42 @@ $('#exportIn').addEventListener('click',async()=>{
 
 /* ---------- backlog (งานค้างรายวัน) ---------- */
 const BL_CH=[
-  {k:'shopee',l:'Shopee'},{k:'lazada',l:'Lazada'},{k:'platform',l:'แพลตฟอร์มอื่นๆ'},
-  {k:'online',l:'ออนไลน์'},{k:'wholesale',l:'ขายส่ง/โปรเจ็ค'},{k:'branch',l:'สาขาฝากส่ง'},
-  {k:'followup',l:'งานส่งตาม/ปัญหา',hot:true},{k:'bill',l:'บิลโอน'}];
-const BL_COLS=[{k:'1',t:'T1',l:'ค้าง 1 วัน',c:'t0'},{k:'2',t:'T2',l:'ค้าง 2 วัน',c:'t2'},{k:'3',t:'T2+',l:'ติดปัญหา',c:'t3'}];
-const BL_WCOLS=[{k:'o',t:'งานยกเลิก',l:'ไม่นับเป็นงานค้าง',c:'wo'},{k:'f',t:'รอต่างประเทศ',l:'ไม่นับค้าง',c:'wf'}];
+  {k:'shopee',l:'Shopee',cols:['1','2','r','o']},
+  {k:'lazada',l:'Lazada',cols:['1','2','r','o']},
+  {k:'platform',l:'แพลตฟอร์มอื่นๆ',cols:['1','2','r','o']},
+  {k:'online',l:'ออนไลน์',cols:['1','2','r','o','f']},
+  {k:'wholesale',l:'ขายส่ง/โปรเจ็ค',cols:['1','2','r','o','f']},
+  {k:'branch',l:'สาขาฝากส่ง',cols:['1','2','r','o']},
+  {k:'followup',l:'งานส่งตาม/ปัญหา',hot:true,auto:true,cols:['1','2']},
+  {k:'bill',l:'บิลโอน',cols:['1','2','7']}];
+function autoFollow(d){
+  if(d!==today()) return null;
+  const r={t1:0,t2:0,n1:[],n2:[],d1:[],d2:[]};
+  cases.forEach(c=>{
+    const st=stageOf(c); if(st!=='queue'&&st!=='waiting') return;
+    const t=tOf(c); if(t<1) return;
+    const k=t===1?'1':'2';
+    r['t'+k]++;
+    r['n'+k].push(`${c.ref||'-'} · ${c.type}${c.product?' · '+c.product:''}${c.reason?' — '+c.reason:''}${c.note?' · '+String(c.note).replace(/\n/g,' '):''}${st==='waiting'?' · รอออเดอร์':''}`);
+    r['d'+k].push(c.startDate||'');
+  });
+  return {date:d,key:'followup',channel:'งานส่งตาม/ปัญหา',kind:'row',auto:true,
+    t1:r.t1,t1n:r.n1.join('\n'),t1d:r.d1.join('\n'),
+    t2:r.t2,t2n:r.n2.join('\n'),t2d:r.d2.join('\n'),
+    t7:0,t7n:'',tr:0,trn:'',to:0,ton:'',tf:0,tfn:'',by:'ระบบ (คิวงานขาออก)',updatedAt:Date.now()};
+}
+const COL={
+  '1':{k:'1',t:'T1',l:'ค้าง 1 วัน',c:'t0'},
+  '2':{k:'2',t:'T2/T2+',l:'ค้าง 2 วันขึ้นไป',c:'t2',dates:true},
+  '7':{k:'7',t:'T7',l:'ค้างเกิน 7 วัน',c:'t3',dates:true},
+  'r':{k:'r',t:'ออเดอร์',l:'ต้องเร่ง รอซับในไทย',c:'wr',dates:true,front:true},
+  'o':{k:'o',t:'งานยกเลิก',l:'ไม่นับเป็นงานค้าง',c:'wo'},
+  'f':{k:'f',t:'รอต่างประเทศ',l:'ไม่นับค้าง',c:'wf',dates:true,front:true}};
+const BL_COLS=[COL['1'],COL['2'],COL['7']];
+const BL_WCOLS=[COL['r'],COL['o'],COL['f']];
 const ALL_COLS=[...BL_COLS,...BL_WCOLS];
+const BACKLOG_KEYS=['1','2','7'];
+const colsOf=ch=>(ch.cols||['1','2','r','o']).map(k=>COL[k]);
 const TH_MON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 function thLong(d){ if(!okDate(d)) return '-'; const x=parse(d); return `${x.getDate()} ${TH_MON[x.getMonth()]} ${x.getFullYear()}`; }
 const LEGACY_KEY={'Shopee':'shopee','Lazada':'lazada','Platform อื่น ๆ':'platform','แพลตฟอร์มอื่นๆ':'platform','ออนไลน์':'online','ขายส่ง/โปรเจค':'wholesale','ขายส่ง/โปรเจ็ค':'wholesale','สาขาฝากส่ง':'branch','บิลโอน':'bill','งานส่งตาม/ปัญหา':'followup'};
@@ -1589,11 +1652,22 @@ let bl=[];
 let draft={}, draftDate='';
 const blKey=x=>x.key||LEGACY_KEY[x.channel]||'other';
 const isRow=x=>x&&x.kind!=='confirm'&&!x.wait;
-const blDoc=(d,k)=>bl.find(x=>x.date===d&&isRow(x)&&blKey(x)===k)||null;
+function mig(doc){
+  if(!doc||!(doc.t3||doc.t3n)) return doc;
+  const d={...doc};
+  const l2=splitLines(d.t2n), l3=splitLines(d.t3n);
+  const p2=padDates(d.t2d,l2.length), p3=padDates(d.t3d,l3.length);
+  d.t2=Math.max((d.t2||0)+(d.t3||0), l2.length+l3.length);
+  d.t2n=[...l2,...l3].join('\n'); d.t2d=[...p2,...p3].join('\n');
+  d.t3=0; d.t3n=''; d.t3d='';
+  return d;
+}
+const blDoc=(d,k)=>{ const x=bl.find(y=>y.date===d&&isRow(y)&&blKey(y)===k); return x?mig(x):null; };
 const blConf=d=>bl.find(x=>x.kind==='confirm'&&x.date===d)||null;
 const isConfirmed=d=>{ const c=blConf(d); return !!(c&&c.confirmed); };
 async function blSet(id,data){ await sbUpsert('backlog',id,{...data,by:meName()}); }
 const splitLines=s=>String(s||'').split('\n').map(x=>x.trim()).filter(Boolean);
+function padDates(s,n){ const a=String(s||'').split('\n'); while(a.length<n) a.push(''); return a.slice(0,n).map(x=>x.trim()); }
 function normBL(list){
   const out=list.filter(x=>!x.wait);
   list.filter(x=>x.wait&&((x.wq||0)>0||x.wn||x.we)).forEach(w=>{
@@ -1606,24 +1680,33 @@ function normBL(list){
 }
 const hhmm=ts=>{ if(!ts) return ''; const x=new Date(ts); return pad(x.getHours())+':'+pad(x.getMinutes()); };
 function prevDoc(d,k){ let best=null; bl.forEach(x=>{ if(isRow(x)&&blKey(x)===k&&x.date<d&&(!best||x.date>best.date)) best=x; }); return best; }
-function emptyDraft(){ const o={dirty:false,carried:null}; ALL_COLS.forEach(c=>{ o['t'+c.k]=''; o['l'+c.k]=[]; }); return o; }
-function docDraft(doc){ const o=emptyDraft(); ALL_COLS.forEach(c=>{ const ls=splitLines(doc['t'+c.k+'n']); const n=Math.max(doc['t'+c.k]||0,ls.length); o['t'+c.k]=n?String(n):''; o['l'+c.k]=ls; }); return o; }
-function carryDraft(p){
-  const o=emptyDraft();
-  const set=(k,lines,n)=>{ const m=Math.max(n||0,lines.length); o['t'+k]=m?String(m):''; o['l'+k]=lines; };
-  set('2',splitLines(p.t1n),p.t1||0);
-  set('3',[...splitLines(p.t2n),...splitLines(p.t3n)],(p.t2||0)+(p.t3||0));
-  set('o',splitLines(p.ton),p.to||0);
-  set('f',splitLines(p.tfn),p.tf||0);
-  if(ALL_COLS.some(c=>o['t'+c.k])) o.carried=p.date;
-  return o;
+function emptyDraft(){ const o={dirty:false,carried:null}; ALL_COLS.forEach(c=>{ o['t'+c.k]=''; o['l'+c.k]=[]; o['d'+c.k]=[]; }); return o; }
+function docDraft(doc){ const o=emptyDraft(); ALL_COLS.forEach(c=>{ const ls=splitLines(doc['t'+c.k+'n']); const n=Math.max(doc['t'+c.k]||0,ls.length); o['t'+c.k]=n?String(n):''; o['l'+c.k]=ls; o['d'+c.k]=padDates(doc['t'+c.k+'d'],ls.length); }); return o; }
+function carryRow(p0,d){
+  const p=mig(p0);
+  const l1=splitLines(p.t1n), l2=splitLines(p.t2n);
+  const d1=padDates(p.t1d,l1.length).map(x=>x||p.date), d2=padDates(p.t2d,l2.length).map(x=>x||p.date);
+  const r={date:d,key:p.key||blKey(p),channel:p.channel,kind:'row',carriedFrom:p.date,by:p.by,updatedAt:p.updatedAt};
+  ALL_COLS.forEach(c=>{ r['t'+c.k]=0; r['t'+c.k+'n']=''; r['t'+c.k+'d']=''; });
+  const lines=[...l2,...l1], dates=[...d2,...d1];
+  r.t2=Math.max((p.t1||0)+(p.t2||0),lines.length); r.t2n=lines.join('\n'); r.t2d=dates.join('\n');
+  ['7','r','o','f'].forEach(k=>{ r['t'+k]=p['t'+k]||0; r['t'+k+'n']=p['t'+k+'n']||''; r['t'+k+'d']=p['t'+k+'d']||''; });
+  return (ALL_COLS.some(c=>r['t'+c.k]||r['t'+c.k+'n']))?r:null;
 }
-function freshDraft(d,k){ const doc=blDoc(d,k); if(doc) return docDraft(doc); const p=prevDoc(d,k); return p?carryDraft(p):emptyDraft(); }
+function effRow(d,k){
+  const ch=BL_CH.find(c=>c.k===k);
+  if(ch&&ch.auto){ const a=autoFollow(d); if(a) return a; }
+  const doc=blDoc(d,k); if(doc) return doc;
+  const p=prevDoc(d,k); return p?carryRow(p,d):null;
+}
+function freshDraft(d,k){ const r=effRow(d,k); if(!r) return emptyDraft(); const o=docDraft(r); o.carried=r.carriedFrom||null; return o; }
 function loadDraft(d){ draftDate=d; draft={}; BL_CH.forEach(ch=>{ draft[ch.k]=freshDraft(d,ch.k); }); }
 function lineRows(k,ck){
-  const o=draft[k]; const n=Math.max(0,parseInt(o['t'+ck],10)||0); const lines=o['l'+ck];
+  const o=draft[k]; const n=Math.max(0,parseInt(o['t'+ck],10)||0); const lines=o['l'+ck], dates=o['d'+ck];
   while(lines.length<n) lines.push('');
   if(lines.length>n&&lines.slice(n).every(x=>!x)) lines.length=n;
+  while(dates.length<lines.length) dates.push('');
+  dates.length=lines.length;
   return lines;
 }
 function autoGrow(ta){ ta.style.height='auto'; ta.style.height=(ta.scrollHeight+2)+'px'; }
@@ -1631,16 +1714,32 @@ function cardStatus(k){
   const o=draft[k], doc=blDoc(draftDate,k);
   if(o.dirty) return {cls:'st-dirty',t:'แก้ไขแล้ว ยังไม่บันทึก'};
   if(doc) return {cls:'st-ok',t:`บันทึกแล้ว · ${doc.by||'-'} · ${hhmm(doc.updatedAt)}`};
-  if(o.carried) return {cls:'st-carry',t:`ยกมาจาก ${thDate(o.carried)} · ตรวจแล้วกดบันทึก`};
+  if(o.carried) return {cls:'st-carry',t:`ยกมาจาก ${thDate(o.carried)} · นับในรายงานแล้ว ลบรายการที่จบแล้วออกได้`};
   return {cls:'st-none',t:'ยังไม่บันทึก'};
 }
 function renderCard(k){
   const ch=BL_CH.find(c=>c.k===k), o=draft[k];
+  const cols=colsOf(ch);
+  if(ch.auto){
+    const a=effRow(draftDate,k)||{};
+    const nums=el('div',{class:'blnums'},...cols.map(c=>el('div',{class:'blnum '+c.c},
+      el('span',{},c.t,el('small',{text:' · '+c.l})),el('b',{style:'font-size:1.1rem',text:String(a['t'+c.k]||0)}))));
+    const det=cols.map(c=>{
+      const ls=splitLines(a['t'+c.k+'n']); if(!ls.length) return null;
+      return el('div',{class:'bldetail'},el('div',{class:'lbl'},`รายละเอียด ${c.t} (${ls.length} รายการ)`),
+        el('ul',{style:'padding-left:20px'},...ls.map(x=>el('li',{class:'small',text:x}))));
+    }).filter(Boolean);
+    const card=el('div',{class:'blcard'+(ch.hot?' hot':''),id:'blcard_'+k},
+      el('div',{class:'blhead'},el('div',{class:'blttl'},el('b',{class:'chname-fixed',text:ch.l}),el('span',{class:'autotag',text:'ดึงจากคิวงานขาออกอัตโนมัติ'})),
+        el('div',{class:'blnumrow'},nums)),...det);
+    const old=document.getElementById('blcard_'+k); if(old) old.replaceWith(card);
+    return card;
+  }
   const st=el('span',{class:'cardstat'});
   const paint=()=>{ const s=cardStatus(k); st.className='cardstat '+s.cls; st.textContent=s.t; };
   const touch=()=>{ if(!o.dirty){ o.dirty=true; paint(); renderBLBar(); } };
   const detWrap=el('div',{class:'bldetails'});
-  const renderDet=()=>detWrap.replaceChildren(...ALL_COLS.map(c=>{
+  const renderDet=()=>detWrap.replaceChildren(...cols.map(c=>{
     const n=Math.max(0,parseInt(o['t'+c.k],10)||0);
     const lines=lineRows(k,c.k);
     if(!n&&!lines.length) return null;
@@ -1649,8 +1748,9 @@ function renderCard(k){
       ...lines.map((v,idx)=>{
         const ta=el('textarea',{rows:'1',class:'blline',placeholder:`รายการที่ ${idx+1}`,oninput:e=>{lines[idx]=e.target.value;autoGrow(e.target);touch();}},v);
         setTimeout(()=>autoGrow(ta),0);
-        const del=el('button',{class:'linedel',title:'ลบรายการนี้',onclick:()=>{ lines.splice(idx,1); const m=Math.max(0,n-1); o['t'+c.k]=m?String(m):''; o.dirty=true; renderCard(k); renderBLBar(); }},'×');
-        return el('div',{class:'bllinewrap'},el('span',{class:'lineno',text:String(idx+1)+'.'}),ta,del);
+        const del=el('button',{class:'linedel',title:'ลบรายการนี้',onclick:()=>{ lines.splice(idx,1); o['d'+c.k].splice(idx,1); const m=Math.max(0,n-1); o['t'+c.k]=m?String(m):''; o.dirty=true; renderCard(k); renderBLBar(); }},'×');
+        const dt=c.dates?el('input',{type:'date',class:'linedate',title:'วันที่เปิดงาน',value:o['d'+c.k][idx]||'',onchange:e=>{o['d'+c.k][idx]=e.target.value;touch();}}):null;
+        return el('div',{class:'bllinewrap'},el('span',{class:'lineno',text:String(idx+1)+'.'}),ta,dt,del);
       }));
   }).filter(Boolean));
   const numBox=c=>el('label',{class:'blnum '+c.c},el('span',{},c.t,el('small',{text:' · '+c.l})),
@@ -1661,8 +1761,8 @@ function renderCard(k){
     el('div',{class:'blhead'},
       el('div',{class:'blttl'},el('b',{class:'chname-fixed',text:ch.l}),st,saveBtn),
       el('div',{class:'blnumrow'},
-        el('div',{class:'blnums'},...BL_COLS.map(numBox)),
-        el('div',{class:'blnums wait'},...BL_WCOLS.map(numBox)))),
+        el('div',{class:'blnums'},...cols.filter(c=>BACKLOG_KEYS.includes(c.k)).map(numBox)),
+        cols.some(c=>!BACKLOG_KEYS.includes(c.k))?el('div',{class:'blnums wait'},...cols.filter(c=>!BACKLOG_KEYS.includes(c.k)).map(numBox)):null)),
     detWrap);
   renderDet(); paint();
   const old=document.getElementById('blcard_'+k); if(old) old.replaceWith(card);
@@ -1706,17 +1806,19 @@ $('#blDate').addEventListener('change',e=>{
 });
 async function saveBL(keys){
   const d=draftDate; if(!okDate(d)){ $('#blErr').textContent='เลือกวันที่'; return false; }
-  const bad=[];
-  keys.forEach(k=>{ const ch=BL_CH.find(c=>c.k===k), o=draft[k];
-    ALL_COLS.forEach(c=>{ const n=parseInt(o['t'+c.k],10)||0; if(n>0&&!(o['l'+c.k]||[]).some(x=>x&&x.trim())) bad.push(`${ch.l} (${c.t})`); }); });
-  if(bad.length){ $('#blErr').textContent='ใส่รายละเอียดอย่างน้อย 1 รายการ: '+bad.join(', '); return false; }
   $('#blErr').textContent='';
   const wasConfirmed=isConfirmed(d);
   try{
     for(const k of keys){
       const ch=BL_CH.find(c=>c.k===k), o=draft[k];
+      if(ch.auto){ const a=autoFollow(d); if(a) await blSet(`b_${d}_${k}`,a); draft[k].dirty=false; continue; }
       const doc={date:d,key:k,channel:ch.l,kind:'row',by:meName(),updatedAt:Date.now()};
-      ALL_COLS.forEach(c=>{ doc['t'+c.k]=parseInt(o['t'+c.k],10)||0; doc['t'+c.k+'n']=(o['l'+c.k]||[]).map(x=>str(x,200)).filter(Boolean).join('\n'); });
+      ALL_COLS.forEach(c=>{
+        const pairs=(o['l'+c.k]||[]).map((x,i)=>[str(x,200),(o['d'+c.k]||[])[i]||'']).filter(p=>p[0]);
+        doc['t'+c.k]=parseInt(o['t'+c.k],10)||0;
+        doc['t'+c.k+'n']=pairs.map(p=>p[0]).join('\n');
+        doc['t'+c.k+'d']=pairs.map(p=>p[1]).join('\n');
+      });
       await blSet(`b_${d}_${k}`,doc);
       o.dirty=false; o.carried=null;
     }
@@ -1743,13 +1845,11 @@ function confirmBL(d){
       dlg.close(); toast('ยืนยันข้อมูลแล้ว บันทึกรูปส่งผู้บริหารได้เลย'); refreshBL(); renderBLReport();
     }catch(e){ err.textContent=dbFail(e); }
   };
-  const btns=carried.length
-    ? [el('button',{class:'btn primary',onclick:()=>go(true)},'บันทึกรายการที่ยกมาตามเดิม แล้วยืนยัน'),el('button',{class:'btn',onclick:()=>go(false)},'ยืนยันโดยไม่รวมรายการที่ยกมา')]
-    : [el('button',{class:'btn primary',onclick:()=>go(false)},'ยืนยัน')];
+  const btns=[el('button',{class:'btn primary',onclick:()=>go(true)},carried.length?'บันทึกรายการที่ยกมา แล้วยืนยัน':'ยืนยัน')];
   $('#dlgBody').replaceChildren(el('h2',{text:'ยืนยันข้อมูลงานค้าง '+thLong(d)}),
-    el('p',{class:'hint',text:'หลังยืนยัน รายงานวันนี้จะบันทึกเป็นรูปได้ และเข้า CSV ถ้ามีคนแก้ไขภายหลัง ต้องกดยืนยันใหม่'}),
+    el('p',{class:'hint',text:'หลังยืนยัน รายงานวันนี้จะบันทึกเป็นรูปได้ และเข้า CSV ถ้ามีคนแก้ไขภายหลัง ต้องกดยืนยันใหม่ · ช่องทางที่ยังไม่บันทึกแต่มียอดยกมา ระบบนับให้ในรายงานอยู่แล้ว'}),
     empty.length?el('p',{},el('b',{text:'ยังไม่มีข้อมูลวันนี้ (จะถือว่าไม่มีงานค้าง): '}),empty.map(c=>c.l).join(', ')):null,
-    carried.length?el('p',{},el('b',{text:'มีรายการยกมาจากวันก่อน ยังไม่มีใครตรวจ: '}),carried.map(c=>c.l).join(', ')):null,
+    carried.length?el('p',{},el('b',{text:'ช่องทางที่ยกยอดมาจากวันก่อนและยังไม่มีใครตรวจ: '}),carried.map(c=>c.l).join(', '),el('span',{class:'hint'},' — ระบบจะบันทึกรายการเหล่านี้ไว้ในวันนี้ให้ตอนยืนยัน')):null,
     el('div',{class:'actions'},...btns,el('button',{class:'btn',onclick:()=>dlg.close()},'ยกเลิก'),err));
   dlg.showModal();
 }
@@ -1761,26 +1861,59 @@ async function unconfirmBL(d){
 
 /* ---------- backlog report ---------- */
 function blDay(d){
-  const rows=BL_CH.map(ch=>{ const doc=blDoc(d,ch.k)||{}; const o={key:ch.k,ch:ch.l,hot:!!ch.hot};
-    ALL_COLS.forEach(c=>{ o['t'+c.k]=doc['t'+c.k]||0; o['l'+c.k]=splitLines(doc['t'+c.k+'n']); });
-    o.tot=o.t1+o.t2+o.t3; return o; });
+  const rows=BL_CH.map(ch=>{ const doc=effRow(d,ch.k)||{}; const o={key:ch.k,ch:ch.l,hot:!!ch.hot,carried:doc.carriedFrom||null};
+    ALL_COLS.forEach(c=>{ o['t'+c.k]=doc['t'+c.k]||0; o['l'+c.k]=splitLines(doc['t'+c.k+'n']); o['d'+c.k]=padDates(doc['t'+c.k+'d'],o['l'+c.k].length); });
+    o.tot=o.t1+o.t2+o.t7; return o; });
   const sums={}; ALL_COLS.forEach(c=>sums[c.k]=rows.reduce((a,r)=>a+r['t'+c.k],0));
-  return {rows,sums,total:sums['1']+sums['2']+sums['3']};
+  return {rows,sums,total:sums['1']+sums['2']+sums['7']};
+}
+function ageOf(d,openDate){ return okDate(openDate)?dayDiff(openDate,d):null; }
+function itemsOf(s,k,d){
+  const out=[], front=!!(COL[k]&&COL[k].front);
+  s.rows.forEach(r=>{
+    r['l'+k].forEach((x,i)=>{
+      const od=(r['d'+k]||[])[i]||'';
+      out.push({ch:r.ch,hot:r.hot,text:x,open:od,age:ageOf(d,od),front});
+    });
+    const miss=r['t'+k]-r['l'+k].length;
+    if(miss>0) out.push({ch:r.ch,hot:r.hot,text:`(ไม่ระบุรายละเอียด ${miss} รายการ)`,open:'',age:null,ghost:true});
+  });
+  return out;
 }
 function blSummaryText(d){
   const s=blDay(d), ok=isConfirmed(d);
-  const L=[`สรุปงานค้างขาออก ${thLong(d)}${ok?'':' (ฉบับร่าง ยังไม่ยืนยัน)'}`,`รวมงานค้าง ${s.total} รายการ (T1 ${s.sums['1']} / T2 ${s.sums['2']} / T2+ ${s.sums['3']})`,''];
-  s.rows.filter(r=>r.tot).sort((a,b)=>b.tot-a.tot).forEach(r=>{
-    L.push(`• ${r.ch}: ${r.tot} รายการ`);
-    BL_COLS.forEach(c=>r['l'+c.k].forEach(x=>L.push(`   ${c.t}: ${x}`)));
-  });
-  if(!s.total) L.push('ไม่มีงานค้าง');
-  [['o','งานยกเลิก (ไม่นับเป็นงานค้าง)'],['f','รอของต่างประเทศ (ไม่นับเป็นงานค้าง)']].forEach(([k,label])=>{
-    if(!s.sums[k]) return;
-    L.push('',`${label} ${s.sums[k]} รายการ`);
-    s.rows.filter(r=>r['t'+k]).forEach(r=>{ L.push(`• ${r.ch}: ${r['t'+k]}`); r['l'+k].forEach(x=>L.push(`   ${x}`)); });
-  });
+  const L=[`สรุปงานค้างขาออก ${thLong(d)}${ok?'':' (ฉบับร่าง ยังไม่ยืนยัน)'}`,
+    `รวมงานค้าง ${s.total} งาน (T1 ${s.sums['1']} · T2/T2+ ${s.sums['2']}${s.sums['7']?' · T7 '+s.sums['7']:''})`,''];
+  const sec=(k,title)=>{
+    const it=itemsOf(s,k,d); if(!it.length) return;
+    L.push(`${title} ${it.length} งาน`);
+    it.forEach(x=>L.push(`   • ${x.ch}: ${x.text}${x.age!=null?` (เปิด ${thDate(x.open)} · ค้าง ${x.age} วัน)`:''}`));
+    L.push('');
+  };
+  sec('2','T2/T2+ ต้องตาม'); sec('1','T1 ค้าง 1 วัน'); sec('7','T7 บิลโอนค้างเกิน 7 วัน'); sec('r','ออเดอร์ต้องเร่ง'); sec('o','งานยกเลิก'); sec('f','รอของต่างประเทศ');
+  if(!s.total&&!s.sums.r&&!s.sums.f&&!s.sums.o) L.push('ไม่มีงานค้าง');
   return L.join('\n');
+}
+function groupByCh(items){
+  const m=new Map();
+  items.forEach(x=>{ if(!m.has(x.ch)) m.set(x.ch,[]); m.get(x.ch).push(x); });
+  return [...m.entries()].sort((a,b)=>b[1].length-a[1].length);
+}
+function itemLi(x,lvl){
+  if(x.front) return el('li',{class:'small'},
+    el('b',{text:(okDate(x.open)?thDate(x.open):'-')+' · '}), x.text,
+    x.age!=null?el('span',{class:'agetag'+(x.age>=7?' bad':''),text:`${x.age} วัน`}):null);
+  return el('li',{class:'small'},
+    lvl?el('b',{text:lvl+': '}):null, x.text,
+    x.age!=null?el('span',{class:'agetag'+(x.age>=4?' bad':''),text:`เปิด ${thDate(x.open)} · ค้าง ${x.age} วัน`}):null);
+}
+function groupBox(title,count,sub,cls,groups,lvlOf){
+  const kids=[el('div',{class:'grphead'},el('b',{text:`${title} · ${count} รายการ`}),sub?el('span',{class:'muted',text:' ('+sub+')'}):null)];
+  groups.forEach(([ch,items])=>{
+    kids.push(el('div',{class:'grpch'},`${ch} · ${items.length}`));
+    kids.push(el('ul',{},...items.map(x=>itemLi(x,lvlOf?lvlOf(x):null))));
+  });
+  return el('div',{class:'grp '+cls},...kids);
 }
 function blCardNodes(d){
   const s=blDay(d), conf=blConf(d), ok=!!(conf&&conf.confirmed);
@@ -1791,48 +1924,76 @@ function blCardNodes(d){
     el('div',{},el('div',{class:'eyebrow'},'สรุปงานค้างขาออก',el('span',{class:'sumbadge '+(ok?'ok':'draft'),text:ok?`ยืนยันแล้ว · ${conf.by||'-'}`:'ฉบับร่าง ยังไม่ยืนยัน'})),
       el('h3',{text:`งานค้าง ${s.total} รายการ`})),
     el('div',{class:'summeta'},'ประจำวันที่ '+thLong(d),el('br'),'Music Arms · คลัง 406'));
+  const carriedCh=s.rows.filter(r=>r.carried&&(r.tot||r.tr||r.to||r.tf));
+  const carryNote=carriedCh.length?el('p',{class:'hint',style:'margin-top:6px'},`ช่องทางที่ยังไม่บันทึกวันนี้ ระบบยกยอดค้างจากวันก่อนมาแสดงให้ ${carriedCh.length} ช่องทาง: `+carriedCh.map(r=>r.ch).join(', ')):null;
   const kpis=el('div',{class:'sumkpis'},
     kpi('k1','T1 · ค้าง 1 วัน',s.sums['1'],rows.filter(r=>r.t1).length+' ช่องทาง'),
-    kpi('k2','T2 · ค้าง 2 วัน',s.sums['2'],rows.filter(r=>r.t2).length+' ช่องทาง'),
-    kpi('k3','T2+ · ติดปัญหา',s.sums['3'],s.sums['3']?'ต้องเคลียร์ให้จบ':'ไม่มี'),
+    kpi('k3','T2/T2+ · ต้องตาม',s.sums['2'],rows.filter(r=>r.t2).length+' ช่องทาง'),
     kpi('k4','รวมงานค้าง',s.total,rows.length+' ช่องทาง'),
-    kpi('k5','งานยกเลิก',s.sums.o,'ไม่นับเป็นงานค้าง'),
-    kpi('kw','รอของต่างประเทศ',s.sums.f,'ไม่นับเป็นงานค้าง'));
+    kpi('k5','ออเดอร์ต้องเร่ง',s.sums.r,'รอซับในไทย'),
+    kpi('kw','งานยกเลิก',s.sums.o,'ไม่นับเป็นงานค้าง'),
+    kpi('kw','รอต่างประเทศ',s.sums.f,'ไม่นับเป็นงานค้าง'));
+
+  const LV=[{k:'7',t:'T7',title:'T7 · บิลโอนค้างเกิน 7 วัน',cls:'g-red'},{k:'2',t:'T2/T2+',title:'T2/T2+ · ค้าง 2 วันขึ้นไป · ต้องตามวันนี้',cls:'g-red'},{k:'1',t:'T1',title:'T1 · ค้าง 1 วัน',cls:'g-amber'}];
+  const hotKey=(BL_CH.find(c=>c.hot)||{}).k, hotLabel=(BL_CH.find(c=>c.hot)||{}).l||'';
+  const hotItems=[]; LV.forEach(l=>itemsOf(s,l.k,d).filter(x=>x.ch===hotLabel).forEach(x=>hotItems.push({...x,lvl:l.t})));
+  const top=[];
+  if(hotItems.length) top.push(el('div',{class:'grp g-red'},
+    el('div',{class:'grphead'},el('b',{text:`${hotLabel} · ${hotItems.length} รายการ`})),
+    el('ul',{},...hotItems.map(x=>itemLi(x,x.lvl)))));
+  const cancelItems=itemsOf(s,'o',d);
+  if(cancelItems.length) top.push(groupBox('งานยกเลิก',cancelItems.length,'ไม่นับเป็นงานค้าง','g-blue',groupByCh(cancelItems)));
+  const topRow=top.length?el('div',{class:'two'},...top):null;
+
+  const tcols=BL_COLS.filter(c=>c.k!=='7'||s.sums['7']);
   const bodyRows = rows.length ? rows.map(r=>el('tr',{},
       el('td',{text:r.ch}),
-      ...BL_COLS.map(c=>el('td',{class:'num'+(r['t'+c.k]?'':' zero')},r['t'+c.k]||'-')),
+      ...tcols.map(c=>el('td',{class:'num'+(r['t'+c.k]?'':' zero')},r['t'+c.k]||'-')),
       el('td',{class:'num'},el('b',{text:String(r.tot)})),
+      el('td',{class:'num'+(r.tr?'':' zero')},r.tr||'-'),
+      el('td',{class:'num'+(r.tf?'':' zero')},r.tf||'-'),
       el('td',{class:'sumbarcell'},el('span',{class:'sumbar',style:'width:'+Math.round(r.tot/max*100)+'%'}))
-    )) : [el('tr',{},el('td',{colspan:'6',class:'empty',text:'ไม่มีงานค้างในวันนี้'}))];
+    )) : [el('tr',{},el('td',{colspan:'7',class:'empty',text:'ไม่มีงานค้างในวันนี้'}))];
   if(rows.length) bodyRows.push(el('tr',{class:'sumtot'},el('td',{},el('b',{text:'รวม'})),
-    ...BL_COLS.map(c=>el('td',{class:'num'},el('b',{text:String(s.sums[c.k])}))),
-    el('td',{class:'num'},el('b',{text:String(s.total)})),el('td',{})));
+    ...tcols.map(c=>el('td',{class:'num'},el('b',{text:String(s.sums[c.k])}))),
+    el('td',{class:'num'},el('b',{text:String(s.total)})),
+    el('td',{class:'num'},el('b',{text:String(s.sums.r)})),
+    el('td',{class:'num'},el('b',{text:String(s.sums.f)})),el('td',{})));
   const tb=el('table',{class:'sumtable'},
-    el('thead',{},el('tr',{},el('th',{text:'ช่องทาง'}),...BL_COLS.map(c=>el('th',{class:'num'},c.t)),el('th',{class:'num'},'รวม'),el('th',{}))),
+    el('thead',{},el('tr',{},el('th',{text:'ช่องทาง'}),...tcols.map(c=>el('th',{class:'num'},c.t)),el('th',{class:'num'},'รวม'),el('th',{class:'num'},'ออเดอร์'),el('th',{class:'num'},'ตปท.'),el('th',{}))),
     el('tbody',{},...bodyRows));
-  const urgent=[];
-  rows.forEach(r=>r.l3.forEach(x=>urgent.push(el('li',{},el('b',{text:r.ch+': '}),x))));
-  const alert=urgent.length?el('div',{},el('h4',{class:'sumh4 red',text:'ต้องตามวันนี้ (T2+)'}),el('div',{class:'sumalert'},el('ul',{},...urgent))):null;
-  const more=(n,ls)=>n>ls.length?[el('li',{class:'small muted',text:`(ไม่ระบุรายละเอียด ${n-ls.length} รายการ)`})]:[];
-  const notes=rows.map(r=>{
-    const li=[];
-    BL_COLS.forEach(c=>{ r['l'+c.k].forEach(x=>li.push(el('li',{class:'small'},el('b',{text:c.t+': '}),x))); li.push(...more(r['t'+c.k],r['l'+c.k])); });
-    return el('div',{class:'sumnote'+(r.hot?' hot':'')},el('div',{},el('b',{text:r.ch}),el('span',{class:'muted',text:` · ${r.tot} รายการ`})),el('ul',{},...li));
+  const maxAge=k=>{ const a=itemsOf(s,k,d).map(x=>x.age).filter(x=>x!=null); return a.length?Math.max(...a):0; };
+  const chk=[['T1 ออกให้จบวันนี้',s.sums['1'],0],['T2/T2+ ต้องตามและเคลียร์',s.sums['2'],maxAge('2')],
+    ['T7 บิลโอนค้างเกิน 7 วัน',s.sums['7'],maxAge('7')],['ออเดอร์ต้องเร่งกับซับ',s.sums.r,maxAge('r')],
+    ['งานยกเลิก ปิดบิลให้จบ',s.sums.o,0],['รอของต่างประเทศ ตามกำหนดเข้า',s.sums.f,maxAge('f')]];
+  const checklist=el('div',{class:'grp g-check'},
+    el('div',{class:'grphead'},el('b',{text:'เช็กลิสต์ปิดวัน'}),el('span',{class:'muted',text:' (T1 และ T2/T2+ ควรเป็น 0 ก่อนปิดวัน)'})),
+    el('table',{class:'sumtable'},el('tbody',{},...chk.map(([l,n,age])=>el('tr',{},
+      el('td',{},n?el('span',{class:'chk dirty',text:'ค้าง'}):el('span',{class:'chk ok',text:'ครบ'})),
+      el('td',{text:l}),el('td',{class:'num'},String(n)),
+      el('td',{class:'sub'},age?`ค้างนานสุด ${age} วัน`:''))))));
+
+  const levelBoxes=[];
+  LV.forEach(l=>{
+    const all=itemsOf(s,l.k,d);
+    const rest=all.filter(x=>x.ch!==hotLabel);
+    const hotN=all.length-rest.length;
+    if(!all.length) return;
+    const box=groupBox(l.title,all.length,'','g-'+l.cls.slice(2),groupByCh(rest));
+    if(hotN) box.append(el('div',{class:'hint',style:'margin-top:4px'},`+ ${hotLabel} ${hotN} รายการ (ดูด้านบน)`));
+    levelBoxes.push(box);
   });
-  const waitBox=(k,title,sub)=>{
-    const rs=s.rows.filter(r=>r['t'+k]);
-    if(!rs.length) return null;
-    return el('div',{class:'waitbox2'},
-      el('div',{},el('b',{text:`${title} · ${s.sums[k]} รายการ`}),el('span',{class:'muted',text:` (${sub})`})),
-      el('div',{class:'waitgrid'},...rs.map(r=>el('div',{},
-        el('div',{class:'small'},el('b',{text:r.ch}),el('span',{class:'muted',text:` · ${r['t'+k]}`})),
-        el('ul',{},...r['l'+k].map(x=>el('li',{class:'small',text:x})),...more(r['t'+k],r['l'+k]))))));
-  };
-  return [head,kpis,el('h4',{class:'sumh4',text:'งานค้างแยกตามช่องทาง'}),tb,alert,
-    notes.length?el('div',{},el('h4',{class:'sumh4',text:'รายละเอียดตามช่องทาง'}),el('div',{class:'sumnotes'},...notes)):null,
-    waitBox('o','งานยกเลิก','ไม่นับเป็นงานค้าง'),
-    waitBox('f','รอของต่างประเทศ','ไม่นับเป็นงานค้าง'),
-    el('div',{class:'sumfoot'},'ที่มา: ระบบงานค้าง — Music Arms Store · งานปัญหาจบที่ T2+')].filter(Boolean);
+  const waitBoxes=[];
+  const rushItems=itemsOf(s,'r',d);
+  if(rushItems.length) waitBoxes.push(groupBox('ออเดอร์ต้องเร่ง',rushItems.length,'รอสินค้าจากซับในไทย','g-blue',groupByCh(rushItems)));
+  const fItems=itemsOf(s,'f',d);
+  if(fItems.length) waitBoxes.push(groupBox('รอของต่างประเทศ',fItems.length,'ไม่นับเป็นงานค้าง','g-grey',groupByCh(fItems)));
+
+  return [head,kpis,carryNote,topRow,
+    el('h4',{class:'sumh4',text:'งานค้างแยกตามช่องทาง'}),tb,checklist,
+    levelBoxes.length?el('h4',{class:'sumh4',text:'รายละเอียดตามระดับ (T2 → T1)'}):null,...levelBoxes,
+    ...waitBoxes,
+    el('div',{class:'sumfoot'},'ที่มา: ระบบงานค้าง — Music Arms Store · T1 คือค้าง 1 วัน · T2 คือค้าง 2 วันขึ้นไป แสดงวันที่เปิดงานเพื่อดูอายุจริง')].filter(Boolean);
 }
 function renderBLReport(){
   const d=$('#brDate').value||today();
@@ -1886,12 +2047,12 @@ document.querySelectorAll('#blChips .chip').forEach(c=>c.addEventListener('click
 function renderBL(){
   const f=$('#blFrom').value,t=$('#blTo').value; if(!okDate(f)||!okDate(t)) return;
   const days=[...new Set(bl.filter(x=>inRange(x.date,f,t)).map(x=>x.date))].sort().reverse();
-  const hs=['วันที่','สถานะ','T1','T2','T2+','รวมงานค้าง','งานยกเลิก','รอต่างประเทศ','ยืนยันโดย'];
+  const hs=['วันที่','สถานะ','T1','T2/T2+','T7','รวมงานค้าง','ออเดอร์เร่ง','งานยกเลิก','รอต่างประเทศ','ยืนยันโดย'];
   const head=el('tr',{},...hs.map((x,i)=>el('th',{class:(i>=2&&i<=7)?'num':''},x)));
   const body=days.length?days.map(d=>{ const s=blDay(d), c=blConf(d), ok=!!(c&&c.confirmed);
     return el('tr',{},el('td',{text:thLong(d)}),el('td',{},el('span',{class:'chk '+(ok?'ok':'dirty')},ok?'ยืนยันแล้ว':'รอยืนยัน')),
-      cell(s.sums['1']),cell(s.sums['2']),cell(s.sums['3']),cell(s.total),cell(s.sums.o),cell(s.sums.f),el('td',{text:ok?(c.by||'-'):'-'})); })
-    :[el('tr',{},el('td',{colspan:'9',class:'empty'},'ยังไม่มีข้อมูลในช่วงนี้'))];
+      cell(s.sums['1']),cell(s.sums['2']),cell(s.sums['7']),cell(s.total),cell(s.sums.r),cell(s.sums.o),cell(s.sums.f),el('td',{text:ok?(c.by||'-'):'-'})); })
+    :[el('tr',{},el('td',{colspan:'10',class:'empty'},'ยังไม่มีข้อมูลในช่วงนี้'))];
   $('#blReport').replaceChildren(el('thead',{},head),el('tbody',{},...body));
 }
 $('#blExport').addEventListener('click',async()=>{
@@ -1899,18 +2060,90 @@ $('#blExport').addEventListener('click',async()=>{
   const f=$('#blFrom').value,t=$('#blTo').value;
   const days=[...new Set(bl.filter(x=>inRange(x.date,f,t)).map(x=>x.date))].filter(isConfirmed).sort();
   if(!days.length){ toast('ไม่มีวันที่ยืนยันแล้วในช่วงนี้'); return; }
-  const head=['วันที่','ยืนยันโดย','ช่องทาง','หมวด','ลำดับ','รายละเอียด','จำนวนในหมวด','ผู้บันทึก'];
+  const head=['วันที่','ยืนยันโดย','ช่องทาง','หมวด','ลำดับ','รายละเอียด','วันที่เปิดงาน','ค้าง (วัน)','จำนวนในหมวด','ผู้บันทึก'];
   const esc=v=>{const s=String(v??'');return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
   const out=[head.join(',')];
   days.forEach(d=>{ const c=blConf(d);
-    BL_CH.forEach(ch=>{ const doc=blDoc(d,ch.k); if(!doc) return;
-      ALL_COLS.forEach(col=>{ const n=doc['t'+col.k]||0; const ls=splitLines(doc['t'+col.k+'n']);
-        ls.forEach((x,i)=>out.push([d,c.by||'',ch.l,col.t,i+1,x,n,doc.by||''].map(esc).join(',')));
-        if(n>ls.length) out.push([d,c.by||'',ch.l,col.t,'',`(ไม่ระบุรายละเอียด ${n-ls.length} รายการ)`,n,doc.by||''].map(esc).join(','));
+    BL_CH.forEach(ch=>{ const doc=effRow(d,ch.k); if(!doc) return;
+      ALL_COLS.forEach(col=>{ const n=doc['t'+col.k]||0; const ls=splitLines(doc['t'+col.k+'n']); const ds=padDates(doc['t'+col.k+'d'],ls.length);
+        ls.forEach((x,i)=>{ const od=ds[i]||''; out.push([d,c.by||'',ch.l,col.t,i+1,x,od,okDate(od)?dayDiff(od,d):'',n,doc.by||''].map(esc).join(',')); });
+        if(n>ls.length) out.push([d,c.by||'',ch.l,col.t,'',`(ไม่ระบุรายละเอียด ${n-ls.length} รายการ)`,'','',n,doc.by||''].map(esc).join(','));
       }); }); });
   try{ await dl.save({filename:`backlog_${f}_${t}.csv`,data:new Blob(['\ufeff'+out.join('\r\n')],{type:'text/csv'})}); toast(`ดาวน์โหลด ${days.length} วันที่ยืนยันแล้ว`); }
   catch(e){ if(e&&e.code!=='declined') toast('บันทึกไฟล์ไม่สำเร็จ'); }
 });
+
+
+/* ---------- inbound summary card ---------- */
+function inSummary(){
+  const live=inb.filter(x=>x.status!=='cancelled');
+  const chk=live.filter(x=>inStageOf(x)==='check'), mv=live.filter(x=>inStageOf(x)==='move');
+  const pcs=l=>l.reduce((a,x)=>a+(Number(x.qty)||0),0);
+  const val=l=>l.reduce((a,x)=>a+inVal(x),0);
+  const td=today();
+  return {chk,mv,
+    chkPcs:pcs(chk),chkVal:val(chk),mvPcs:pcs(mv),mvVal:val(mv),
+    late:[...chk,...mv].filter(x=>inT(x)>=2),
+    inToday:pcs(live.filter(x=>x.receivedDate===td)),
+    doneToday:pcs(live.filter(x=>x.doneDate===td))};
+}
+function inLineText(x){
+  return `${x.ref||'-'}${x.product?' · '+x.product:''} · ${x.qty||1} ชิ้น${x.channel?' · '+x.channel:''}${x.unitValue?' · '+money(inVal(x))+' บาท':''}`;
+}
+function inCardNodes(){
+  const s=inSummary(), now=new Date();
+  const kpi=(cls,label,n,sub)=>el('div',{class:'sumkpi '+cls},el('b',{text:label}),el('div',{class:'n',text:String(n)}),el('small',{text:sub}));
+  const head=el('div',{class:'sumhead'},
+    el('div',{},el('div',{class:'eyebrow',text:'สรุปงานขาเข้า (โซนชั้น 1)'}),el('h3',{text:`ค้างตรวจและจัดเก็บ ${s.chkPcs+s.mvPcs} ชิ้น`})),
+    el('div',{class:'summeta'},`ณ ${thLong(today())} ${pad(now.getHours())}:${pad(now.getMinutes())}`,el('br'),'Music Arms · คลัง 406'));
+  const kpis=el('div',{class:'sumkpis'},
+    kpi('k1','รอตรวจ',s.chkPcs,s.chk.length+' รายการ'),
+    kpi('k3','รอจัดเก็บ/ส่งต่อ',s.mvPcs,s.mv.length+' รายการ'),
+    kpi('k4','มูลค่าที่ค้าง',money(s.chkVal+s.mvVal),'บาท'),
+    kpi('k5','ค้างเกิน 2 วัน',s.late.length,s.late.length?'ต้องเคลียร์':'ไม่มี'),
+    kpi('kw','รับเข้าวันนี้',s.inToday,'ชิ้น'),
+    kpi('kw','เสร็จวันนี้',s.doneToday,'ชิ้น'));
+  const types=[...new Set([...s.chk,...s.mv].map(x=>x.inType||'อื่นๆ'))];
+  const rows=types.map(t=>{
+    const c=s.chk.filter(x=>(x.inType||'อื่นๆ')===t), m=s.mv.filter(x=>(x.inType||'อื่นๆ')===t);
+    const pc=c.reduce((a,x)=>a+(Number(x.qty)||0),0), pm=m.reduce((a,x)=>a+(Number(x.qty)||0),0);
+    const v=[...c,...m].reduce((a,x)=>a+inVal(x),0);
+    return {t,pc,pm,tot:pc+pm,v};
+  }).sort((a,b)=>b.tot-a.tot);
+  const tb=el('table',{class:'sumtable'},
+    el('thead',{},el('tr',{},el('th',{text:'ประเภทขาเข้า'}),el('th',{class:'num'},'รอตรวจ'),el('th',{class:'num'},'รอจัดเก็บ'),el('th',{class:'num'},'รวม (ชิ้น)'),el('th',{class:'num'},'มูลค่า (บาท)'))),
+    el('tbody',{},...(rows.length?rows.map(r=>el('tr',{},el('td',{text:r.t}),
+        el('td',{class:'num'+(r.pc?'':' zero')},r.pc||'-'),el('td',{class:'num'+(r.pm?'':' zero')},r.pm||'-'),
+        el('td',{class:'num'},el('b',{text:String(r.tot)})),el('td',{class:'num'},r.v?money(r.v):'-'))):
+      [el('tr',{},el('td',{colspan:'5',class:'empty',text:'ไม่มีของค้างตรวจ'}))])));
+  const box=(title,list,cls,sub,lbl)=>{
+    if(!list.length) return null;
+    const sorted=list.slice().sort((a,b)=>inT(b)-inT(a));
+    return el('div',{class:'grp '+cls},
+      el('div',{class:'grphead'},el('b',{text:`${title} · ${list.length} รายการ`}),sub?el('span',{class:'muted',text:' ('+sub+')'}):null),
+      el('ul',{},...sorted.slice(0,14).map(x=>el('li',{class:'small'},
+        inLineText(x),
+        lbl&&x.result&&IN_RES[x.result]?el('span',{class:'agetag',text:IN_RES[x.result].short}):null,
+        el('span',{class:'agetag'+(inT(x)>=2?' bad':''),text:`T${inT(x)}`}))),
+        sorted.length>14?el('li',{class:'small muted'},`และอีก ${sorted.length-14} รายการ`):null));
+  };
+  return [head,kpis,el('h4',{class:'sumh4',text:'ของค้างแยกตามประเภทขาเข้า'}),tb,
+    box('รอตรวจ',s.chk,'g-red','ตรวจแล้วเลือกผลให้จบในวัน'),
+    box('รอจัดเก็บ / ส่งต่อ',s.mv,'g-amber','ตรวจแล้ว รอเข้าโลเคชัน เคลียร์แรนซ์ หรือส่งช่าง',true),
+    el('div',{class:'sumfoot'},'ที่มา: ระบบงานขาเข้า — Music Arms Store · เป้าหมาย T0 คือของที่เข้าวันนี้ ตรวจและส่งต่อจบในวันเดียวกัน')].filter(Boolean);
+}
+function inSummaryText(){
+  const s=inSummary();
+  const L=[`สรุปงานขาเข้า ${thLong(today())}`,
+    `รอตรวจ ${s.chkPcs} ชิ้น (${s.chk.length} รายการ) · รอจัดเก็บ/ส่งต่อ ${s.mvPcs} ชิ้น (${s.mv.length} รายการ)`,
+    `มูลค่าที่ค้าง ${money(s.chkVal+s.mvVal)} บาท · ค้างเกิน 2 วัน ${s.late.length} รายการ`,''];
+  if(s.chk.length){ L.push('รอตรวจ'); s.chk.slice().sort((a,b)=>inT(b)-inT(a)).forEach(x=>L.push(`   • ${inLineText(x)} (T${inT(x)})`)); L.push(''); }
+  if(s.mv.length){ L.push('รอจัดเก็บ / ส่งต่อ'); s.mv.slice().sort((a,b)=>inT(b)-inT(a)).forEach(x=>L.push(`   • ${inLineText(x)}${x.result&&IN_RES[x.result]?' · '+IN_RES[x.result].short:''} (T${inT(x)})`)); }
+  return L.join('\n');
+}
+function renderInCard(){ const n=$('#inSumCard'); if(n) n.replaceChildren(...inCardNodes()); }
+$('#inPng').addEventListener('click',()=>saveCardPng($('#inSumCard'),`งานขาเข้า_${today()}.png`,'#inHint'));
+$('#inCopy').addEventListener('click',()=>copyText(inSummaryText(),'#inHint','#tab-inlist'));
 
 /* ---------- tabs & boot ---------- */
 document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
@@ -1934,6 +2167,7 @@ fillFilterSelects(); mountNewForm(); mountInForm(); fillInFilters(); setOvRange(
 let lastDay=today(); setInterval(()=>{ if(today()!==lastDay){ lastDay=today(); renderAll(); } },60000);
 boot();
 })();
+
 
 </script>
 </body>
