@@ -1614,7 +1614,7 @@ const BL_CH=[
   {k:'platform',l:'แพลตฟอร์มอื่นๆ',cols:['1','2','r','o']},
   {k:'online',l:'ออนไลน์',cols:['1','2','r','o','f']},
   {k:'wholesale',l:'ขายส่ง/โปรเจ็ค',cols:['1','2','r','o','f']},
-  {k:'branch',l:'สาขาฝากส่ง',cols:['1','2','r','o']},
+  {k:'branch',l:'สาขาฝากส่ง',cols:['1','2']},
   {k:'followup',l:'งานส่งตาม/ปัญหา',hot:true,auto:true,cols:['1','2']},
   {k:'bill',l:'บิลโอน',cols:['1','2','7']}];
 function autoFollow(d){
@@ -1962,17 +1962,6 @@ function blCardNodes(d){
   const tb=el('table',{class:'sumtable'},
     el('thead',{},el('tr',{},el('th',{text:'ช่องทาง'}),...tcols.map(c=>el('th',{class:'num'},c.t)),el('th',{class:'num'},'รวม'),el('th',{class:'num'},'ออเดอร์'),el('th',{class:'num'},'ตปท.'),el('th',{}))),
     el('tbody',{},...bodyRows));
-  const maxAge=k=>{ const a=itemsOf(s,k,d).map(x=>x.age).filter(x=>x!=null); return a.length?Math.max(...a):0; };
-  const chk=[['T1 ออกให้จบวันนี้',s.sums['1'],0],['T2/T2+ ต้องตามและเคลียร์',s.sums['2'],maxAge('2')],
-    ['T7 บิลโอนค้างเกิน 7 วัน',s.sums['7'],maxAge('7')],['ออเดอร์ต้องเร่งกับซับ',s.sums.r,maxAge('r')],
-    ['งานยกเลิก ปิดบิลให้จบ',s.sums.o,0],['รอของต่างประเทศ ตามกำหนดเข้า',s.sums.f,maxAge('f')]];
-  const checklist=el('div',{class:'grp g-check'},
-    el('div',{class:'grphead'},el('b',{text:'เช็กลิสต์ปิดวัน'}),el('span',{class:'muted',text:' (T1 และ T2/T2+ ควรเป็น 0 ก่อนปิดวัน)'})),
-    el('table',{class:'sumtable'},el('tbody',{},...chk.map(([l,n,age])=>el('tr',{},
-      el('td',{},n?el('span',{class:'chk dirty',text:'ค้าง'}):el('span',{class:'chk ok',text:'ครบ'})),
-      el('td',{text:l}),el('td',{class:'num'},String(n)),
-      el('td',{class:'sub'},age?`ค้างนานสุด ${age} วัน`:''))))));
-
   const levelBoxes=[];
   LV.forEach(l=>{
     const all=itemsOf(s,l.k,d);
@@ -1990,7 +1979,7 @@ function blCardNodes(d){
   if(fItems.length) waitBoxes.push(groupBox('รอของต่างประเทศ',fItems.length,'ไม่นับเป็นงานค้าง','g-grey',groupByCh(fItems)));
 
   return [head,kpis,carryNote,topRow,
-    el('h4',{class:'sumh4',text:'งานค้างแยกตามช่องทาง'}),tb,checklist,
+    el('h4',{class:'sumh4',text:'งานค้างแยกตามช่องทาง'}),tb,
     levelBoxes.length?el('h4',{class:'sumh4',text:'รายละเอียดตามระดับ (T2 → T1)'}):null,...levelBoxes,
     ...waitBoxes,
     el('div',{class:'sumfoot'},'ที่มา: ระบบงานค้าง — Music Arms Store · T1 คือค้าง 1 วัน · T2 คือค้าง 2 วันขึ้นไป แสดงวันที่เปิดงานเพื่อดูอายุจริง')].filter(Boolean);
