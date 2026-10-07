@@ -269,6 +269,7 @@ dialog::backdrop{background:rgba(20,14,8,.45)}
 </style>
 </head>
 
+
 <body>
 <div class="wrap">
   <header>
@@ -1615,7 +1616,7 @@ const BL_CH=[
   {k:'online',l:'ออนไลน์',cols:['1','2','r','o','f']},
   {k:'wholesale',l:'ขายส่ง/โปรเจ็ค',cols:['1','2','r','o','f']},
   {k:'branch',l:'สาขาฝากส่ง',cols:['1','2']},
-  {k:'followup',l:'งานส่งตาม/ปัญหา',hot:true,auto:true,cols:['1','2']},
+  {k:'followup',l:'งานส่งตาม/ปัญหา',hot:true,cols:['1','2']},
   {k:'bill',l:'บิลโอน',cols:['1','2','7']}];
 function autoFollow(d){
   if(d!==today()) return null;
@@ -2156,6 +2157,7 @@ fillFilterSelects(); mountNewForm(); mountInForm(); fillInFilters(); setOvRange(
 let lastDay=today(); setInterval(()=>{ if(today()!==lastDay){ lastDay=today(); renderAll(); } },60000);
 boot();
 })();
+
 
 
 </script>
