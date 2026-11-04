@@ -193,7 +193,7 @@ dialog::backdrop{background:rgba(20,14,8,.45)}
 .blnum small{color:var(--mute);font-weight:400}
 .blnum input{width:70px}
 .blnum.t0{--c:var(--t0)}.blnum.t2{--c:var(--t2)}.blnum.t3{--c:var(--t3)}
-.blnum.tp{--c:#B4522E}.blnum.tx{--c:#7A4FA8}.blnum.tg{--c:#C3482A}
+.blnum.tx{--c:#7A4FA8}.blnum.tg{--c:#C3482A}
 .teamgrp{display:flex;align-items:center;gap:9px;margin:26px 0 10px;padding-bottom:7px;border-bottom:2px solid var(--line2)}
 .teamgrp:first-child{margin-top:4px}
 .teamgrp i{width:6px;height:21px;border-radius:3px;background:var(--acc);display:inline-block}
@@ -205,7 +205,6 @@ dialog::backdrop{background:rgba(20,14,8,.45)}
 .grpch.lv{display:inline-block;margin:8px 0 2px;padding:1px 10px;border-radius:999px;font-size:.78rem;font-weight:700;background:var(--sunk);border:1px solid var(--line2)}
 .grpch.lv-2,.grpch.lv-7,.grpch.lv-g{background:#FBE7E0;border-color:#F0C6B6;color:#A4482A}
 .grpch.lv-1{background:#FBF1DC;border-color:#EEDCAF;color:#8A6412}
-.grpch.lv-p{background:#FDEDE4;border-color:#F3D3BE;color:#9A4B22}
 .grpch.lv-x{background:#F1EAFA;border-color:#DECDF2;color:#6A3FA0}
 .causetag{display:inline-block;margin-right:6px;padding:0 8px;border-radius:999px;font-size:.74rem;font-weight:700;background:var(--sunk);border:1px solid var(--line2);color:var(--mute)}
 .steptag{display:inline-block;margin-left:6px;padding:0 8px;border-radius:999px;font-size:.74rem;font-weight:600;background:#E6EFF8;color:#2A6198}
@@ -885,14 +884,14 @@ const TEAMS=[
   {k:'brn',l:'ทีมสาขา',sub:'งานที่สาขาฝากคลังส่ง'},
   {k:'legacy',l:'ข้อมูลเดิม (ก่อนแยกตามทีม)',sub:'ย้ายรายการไปช่องทางของทีมแล้วลบทิ้งได้',legacy:true}];
 const TEAM_L=k=>(TEAMS.find(t=>t.k===k)||{}).l||'-';
-const FULL=['1','2','p','x','g','r','o'];
+const FULL=['1','2','x','g','r','o'];
 const BL_CH=[
   {k:'shopee',l:'Shopee',team:'ecom',cols:FULL,ec:true},
   {k:'lazada',l:'Lazada',team:'ecom',cols:FULL,ec:true},
   {k:'platform',l:'TikTok',team:'ecom',cols:FULL,ec:true},
   {k:'online',l:'ออนไลน์',team:'onl',cols:[...FULL,'f']},
   {k:'wholesale',l:'ขายส่ง/โปรเจค',team:'whs',cols:[...FULL,'f']},
-  {k:'branch',l:'สาขาฝากส่ง',team:'brn',cols:['1','2','p','g','r'],soft:true},
+  {k:'branch',l:'สาขาฝากส่ง',team:'brn',cols:['1','2','g','r'],soft:true},
   {k:'bill',l:'บิลโอน (ข้อมูลเดิม)',team:'legacy',cols:['1','2','7'],legacy:true},
   {k:'partial',l:'งานค้างส่ง (ข้อมูลเดิม)',team:'legacy',cols:['1','2','r','f'],legacy:true},
   {k:'special',l:'งานพิเศษ (ข้อมูลเดิม)',team:'legacy',cols:['1','2'],legacy:true},
@@ -915,16 +914,15 @@ const COL={
   '1':{k:'1',t:'T1',l:'ค้าง 1 วัน',c:'t0'},
   '2':{k:'2',t:'T2/T2+',l:'ค้าง 2 วันขึ้นไป',c:'t2',dates:true},
   '7':{k:'7',t:'T7',l:'ค้างเกิน 7 วัน',c:'t3',dates:true},
-  'p':{k:'p',t:'งานค้างส่ง',l:'ส่งไม่ครบ รอของที่เหลือ',c:'tp',dates:true},
   'x':{k:'x',t:'งานพิเศษ',l:'ส่งแยก/นอกรอบ',c:'tx',dates:true},
   'g':{k:'g',t:'งานส่งตาม/ปัญหา',l:'ส่งใหม่/รับกลับ',c:'tg',dates:true,fix:true},
   'r':{k:'r',t:'ออเดอร์',l:'ต้องเร่ง รอซับในไทย',c:'wr',dates:true,front:true},
   'o':{k:'o',t:'ยกเลิก',l:'ยกเลิกวันนี้ ใส่เหตุผล',c:'wo'},
   'f':{k:'f',t:'รอต่างประเทศ',l:'ไม่นับค้าง',c:'wf',dates:true,front:true}};
-const BL_COLS=[COL['1'],COL['2'],COL['7'],COL['p'],COL['x'],COL['g']];
+const BL_COLS=[COL['1'],COL['2'],COL['7'],COL['x'],COL['g']];
 const BL_WCOLS=[COL['r'],COL['o'],COL['f']];
 const ALL_COLS=[...BL_COLS,...BL_WCOLS];
-const BACKLOG_KEYS=['1','2','7','p','x','g'];
+const BACKLOG_KEYS=['1','2','7','x','g'];
 const colsOf=ch=>(ch.cols||['1','2','r','o']).map(k=>COL[k]);
 const TH_MON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 function thLong(d){ if(!okDate(d)) return '-'; const x=parse(d); return `${x.getDate()} ${TH_MON[x.getMonth()]} ${x.getFullYear()}`; }
@@ -932,14 +930,17 @@ const LEGACY_KEY={'Shopee':'shopee','Lazada':'lazada','Platform อื่น ๆ
 let draft={}, draftDate='';
 const blKey=x=>x.key||LEGACY_KEY[x.channel]||'other';
 const isRow=x=>x&&x.kind!=='confirm'&&x.kind!=='day'&&!x.wait;
+const MERGE_INTO_T2=['3','p'];
 function mig(doc){
-  if(!doc||!(doc.t3||doc.t3n)) return doc;
+  if(!doc||!MERGE_INTO_T2.some(k=>doc['t'+k]||doc['t'+k+'n'])) return doc;
   const d={...doc};
-  const l2=splitLines(d.t2n), l3=splitLines(d.t3n);
-  const p2=padDates(d.t2d,l2.length), p3=padDates(d.t3d,l3.length);
-  d.t2=Math.max((d.t2||0)+(d.t3||0), l2.length+l3.length);
-  d.t2n=[...l2,...l3].join('\n'); d.t2d=[...p2,...p3].join('\n');
-  d.t3=0; d.t3n=''; d.t3d='';
+  const grab=k=>{ const l=splitLines(d['t'+k+'n']);
+    return {n:d['t'+k]||0,l,dd:padDates(d['t'+k+'d'],l.length),cc:padDates(d['t'+k+'c'],l.length),ss:padDates(d['t'+k+'s'],l.length)}; };
+  const parts=[grab('2'),...MERGE_INTO_T2.map(grab)];
+  const cat=f=>parts.flatMap(p=>p[f]);
+  d.t2=Math.max(parts.reduce((a,p)=>a+p.n,0), cat('l').length);
+  d.t2n=cat('l').join('\n'); d.t2d=cat('dd').join('\n'); d.t2c=cat('cc').join('\n'); d.t2s=cat('ss').join('\n');
+  MERGE_INTO_T2.forEach(k=>{ d['t'+k]=0; d['t'+k+'n']=''; d['t'+k+'d']=''; d['t'+k+'c']=''; d['t'+k+'s']=''; });
   return d;
 }
 const blDoc=(d,k)=>{ const x=bl.find(y=>y.date===d&&isRow(y)&&blKey(y)===k); return x?mig(x):null; };
@@ -972,7 +973,7 @@ function carryRow(p0,d){
   ALL_COLS.forEach(c=>{ r['t'+c.k]=0; r['t'+c.k+'n']=''; r['t'+c.k+'d']=''; r['t'+c.k+'c']=''; r['t'+c.k+'s']=''; });
   const lines=[...l2,...l1], dates=[...d2,...d1], causes=[...c2,...c1], steps=[...s2,...s1];
   r.t2=Math.max((p.t1||0)+(p.t2||0),lines.length); r.t2n=lines.join('\n'); r.t2d=dates.join('\n'); r.t2c=causes.join('\n'); r.t2s=steps.join('\n');
-  ['7','p','x','g','r','f'].forEach(k=>{ r['t'+k]=p['t'+k]||0; r['t'+k+'n']=p['t'+k+'n']||''; r['t'+k+'d']=p['t'+k+'d']||''; r['t'+k+'c']=p['t'+k+'c']||''; r['t'+k+'s']=p['t'+k+'s']||''; });
+  ['7','x','g','r','f'].forEach(k=>{ r['t'+k]=p['t'+k]||0; r['t'+k+'n']=p['t'+k+'n']||''; r['t'+k+'d']=p['t'+k+'d']||''; r['t'+k+'c']=p['t'+k+'c']||''; r['t'+k+'s']=p['t'+k+'s']||''; });
   return (ALL_COLS.some(c=>r['t'+c.k]||r['t'+c.k+'n']))?r:null;
 }
 function effRow(d,k){
@@ -1212,7 +1213,7 @@ function blSummaryText(d){
   const team=repTeam, s=blDay(d,team), ok=isConfirmed(d);
   const L=[`รายงานประจำวัน ${thLong(d)}${team==='all'?'':' · '+TEAM_L(team)}${ok?'':' (ฉบับร่าง ยังไม่ยืนยัน)'}`,'',
     ...(team==='all'?dayReportText(d):[]),'— งานค้าง —',
-    `รวมงานค้าง ${s.total} งาน (T1 ${s.sums['1']} · T2/T2+ ${s.sums['2']}${s.sums['7']?' · T7 '+s.sums['7']:''}${s.sums.p?' · งานค้างส่ง '+s.sums.p:''}${s.sums.x?' · งานพิเศษ '+s.sums.x:''}${s.sums.g?' · งานส่งตาม '+s.sums.g:''})`,''];
+    `รวมงานค้าง ${s.total} งาน (T1 ${s.sums['1']} · T2/T2+ ${s.sums['2']}${s.sums['7']?' · T7 '+s.sums['7']:''}${s.sums.x?' · งานพิเศษ '+s.sums.x:''}${s.sums.g?' · งานส่งตาม '+s.sums.g:''})`,''];
   const C=causeData(d,team);
   if(C.total){ L.push(`— สาเหตุของปัญหา · ก่อนส่ง ${C.beforeTot} · หลังส่ง ${C.afterTot} —`);
     C.rows.forEach(r=>L.push(`${r.cause}: ${r.n} (ก่อนส่ง ${r.before} · หลังส่ง ${r.after})`)); L.push(''); }
@@ -1223,12 +1224,12 @@ function blSummaryText(d){
     L.push('');
   };
   sec('2','T2/T2+ ต้องตาม'); sec('1','T1 ค้าง 1 วัน'); sec('7','T7 ค้างเกิน 7 วัน');
-  sec('p','งานค้างส่ง'); sec('x','งานพิเศษ'); sec('g','งานส่งตาม/ปัญหา');
+  sec('x','งานพิเศษ'); sec('g','งานส่งตาม/ปัญหา');
   sec('r','ออเดอร์ต้องเร่ง'); sec('o','งานยกเลิก'); sec('f','รอของต่างประเทศ');
   if(!s.total&&!s.sums.r&&!s.sums.f&&!s.sums.o) L.push('ไม่มีงานค้าง');
   return L.join('\n');
 }
-const LVL=[{k:'2',t:'T2/T2+'},{k:'7',t:'T7'},{k:'g',t:'งานส่งตาม/ปัญหา'},{k:'p',t:'งานค้างส่ง'},{k:'x',t:'งานพิเศษ'},{k:'1',t:'T1'}];
+const LVL=[{k:'2',t:'T2/T2+'},{k:'7',t:'T7'},{k:'g',t:'งานส่งตาม/ปัญหา'},{k:'x',t:'งานพิเศษ'},{k:'1',t:'T1'}];
 function itemLi2(x){
   return el('li',{class:'small'},
     x.cause?el('span',{class:'causetag',text:x.cause}):null,
@@ -1267,7 +1268,6 @@ function teamKpiRow(d,team){
   const a=[kpiTile('k4','รวมงานค้าง',String(s.total),s.rows.filter(r=>r.tot).length+' ช่องทาง'),
       T('k3','T1 · ค้าง 1 วัน','1','ค้าง 1 วัน',true),
       T('k7','T2/T2+','2','ต้องเคลียร์วันนี้',true),
-      T('k3','งานค้างส่ง','p','ส่งไม่ครบ รอของที่เหลือ'),
       T('k6','งานพิเศษ','x','ส่งแยก/นอกรอบ'),
       T('k7','งานส่งตาม/ปัญหา','g','ส่งใหม่/รับกลับ')].filter(Boolean);
   const b=[T('k5','ออเดอร์ต้องเร่ง','r','รอซับในไทย'),
@@ -1337,7 +1337,7 @@ function shipKpis(d){
   const sum=(key,ks)=>s.rows.filter(r=>key(r)).reduce((a,r)=>a+ks.reduce((b,k)=>b+r['t'+k],0),0);
   const ship=r=>r.key!=='bill';
   const t1=sum(ship,['1']), t2=sum(ship,['2']);
-  const fix=s.sums.g, part=s.sums.p, spec=s.sums.x;
+  const fix=s.sums.g, spec=s.sums.x;
   const shipPct=pct(D.ecTot.shipped,D.ecTot.total), cxPct=pct(D.ecTot.cancelled,D.ecTot.total);
   const finOpenLines=D.finOpen.map(x=>`${x.type||'-'} · ${x.text||''}${x.fix?' → '+x.fix:''}${x.owner?' ('+x.owner+')':''}`);
   const scanLines=D.scanRows.filter(r=>r.left).map(r=>`${r.name} · ยังไม่สแกน ${r.left} จาก ${r.total}`);
@@ -1362,7 +1362,6 @@ function shipKpis(d){
   const rowBL=el('div',{class:'sumkpis bl6'},
     kpiTile(t1?'k3':'k2','T1 · ค้าง 1 วัน',String(t1),'ค้าง 1 วัน',t1?()=>detailDialog('T1 · ค้าง 1 วัน',lines('1')):null),
     kpiTile(t2?'k7':'k2','T2/T2+',String(t2),t2?'ต้องเคลียร์วันนี้':'ไม่มีงานค้างข้ามวัน',t2?()=>detailDialog('T2/T2+',lines('2')):null),
-    kpiTile(part?'k3':'k2','งานค้างส่ง',String(part),part?'ส่งไม่ครบ รอของที่เหลือ':'ส่งครบทุกงาน',part?()=>detailDialog('งานค้างส่ง',lines('p')):null),
     kpiTile(spec?'k6':'k2','งานพิเศษ',String(spec),'ส่งแยก/นอกรอบ',spec?()=>detailDialog('งานพิเศษ',lines('x')):null),
     kpiTile(fix?'k7':'k2','งานส่งตาม/ปัญหา',String(fix),fix?'ส่งตาม/ส่งใหม่ ไม่ควรเกิด':'ไม่มีงานซ้ำ',fix?()=>detailDialog('งานส่งตาม/ปัญหา',lines('g')):null),
     kpiTile('k4','รวมงานค้าง',String(s.total),s.rows.filter(r=>r.tot).length+' ช่องทาง'));
@@ -1733,7 +1732,7 @@ function periodLabel(p,mode,f,t){
   if(mode==='all') return thLong(f)+' – '+thLong(t);
   return thLong(p);
 }
-const CSV_COLS=[['1','T1'],['2','T2/T2+'],['7','T7'],['p','งานค้างส่ง'],['x','งานพิเศษ'],['g','งานส่งตาม/ปัญหา']];
+const CSV_COLS=[['1','T1'],['2','T2/T2+'],['7','T7'],['x','งานพิเศษ'],['g','งานส่งตาม/ปัญหา']];
 function causeCsv(f,t,mode){
   const days=[...new Set(bl.filter(x=>inRange(x.date,f,t)).map(x=>x.date))].filter(isConfirmed).sort();
   if(!days.length) return null;
